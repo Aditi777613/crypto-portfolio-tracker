@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite" // simple local database
+  provider = "sqlite"
   url      = "file:./dev.db"
 }
 
@@ -11,7 +11,7 @@ model User {
   id       String   @id @default(cuid())
   email    String   @unique
   password String
-  balance  Float    @default(10000) // start each user with $10,000
+  balance  Float    @default(10000)
   trades   Trade[]
   holdings Holding[]
 }
@@ -31,6 +31,6 @@ model Trade {
   coin      String
   amount    Float
   usdValue  Float
-  type      String   // "buy" or "sell"
+  type      String
   createdAt DateTime @default(now())
 }
