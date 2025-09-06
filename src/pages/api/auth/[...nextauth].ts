@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
-import { compare, hash } from "bcryptjs";
+import { compare } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -22,22 +22,16 @@ export const authOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user) {
-          throw new Error("User not found");
-        }
+        if (!user) throw new Error("User not found");
 
         const isValid = await compare(credentials.password, user.password);
-        if (!isValid) {
-          throw new Error("Invalid password");
-        }
+        if (!isValid) throw new Error("Invalid password");
 
         return { id: user.id, email: user.email };
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
 };
 
