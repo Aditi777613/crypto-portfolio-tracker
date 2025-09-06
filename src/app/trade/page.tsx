@@ -6,21 +6,26 @@ import Link from "next/link";
 const COINS = ["BTC", "ETH", "USDT", "USDC", "XMR", "SOL"] as const;
 type Coin = typeof COINS[number];
 
-type Price = { symbol: string; price: number | null };
-
 export default function TradePage() {
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [coin, setCoin] = useState<Coin>("BTC");
   const [usd, setUsd] = useState<number>(100);
   const [type, setType] = useState<"buy" | "sell">("buy");
-  const [trades, setTrades] = useState<any[]>([]);
+  const [trades, setTrades] = useState<Array<{
+    id: string;
+    coin: string;
+    amount: number;
+    usdValue: number;
+    type: string;
+    createdAt: string;
+  }>>([]);
   const [loading, setLoading] = useState(false);
 
   async function fetchPrices() {
     const res = await fetch("/api/prices");
     const data = await res.json();
     const map: Record<string, number> = {};
-    data.forEach((p: any) => {
+    data.forEach((p: { symbol: string; price: number | null }) => {
       map[p.symbol] = p.price ?? 0;
     });
     setPrices(map);
@@ -59,8 +64,8 @@ export default function TradePage() {
       // refresh
       await Promise.all([fetchPrices(), fetchTrades()]);
       alert("Trade executed");
-    } catch (err: any) {
-      alert(err.message || "Error");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error");
     } finally {
       setLoading(false);
     }

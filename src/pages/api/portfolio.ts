@@ -8,16 +8,22 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
-  if (!session?.user?.email) return res.status(401).json({ error: "Not authenticated" });
+  if (!session?.user?.email) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { holdings: true },
   });
 
-  if (!user) return res.status(404).json({ error: "User not found" });
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
 
-  return res.status(200).json({
+  res.status(200).json({
     balance: user.balance,
     holdings: user.holdings.map((h) => ({ coin: h.coin, amount: h.amount })),
   });

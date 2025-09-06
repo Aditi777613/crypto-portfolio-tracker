@@ -15,7 +15,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const ids = COINS.map((c) => c.id).join(",");
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
     const r = await fetch(url);
-    if (!r.ok) return res.status(r.status).json({ error: "CoinGecko error" });
+    if (!r.ok) {
+      res.status(r.status).json({ error: "CoinGecko error" });
+      return;
+    }
     const data = await r.json();
 
     const mapped = COINS.map((c) => ({
@@ -27,9 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // cache on Vercel edge for 30s
     res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
-    return res.status(200).json(mapped);
+    res.status(200).json(mapped);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "internal" });
+    res.status(500).json({ error: "internal" });
   }
 }

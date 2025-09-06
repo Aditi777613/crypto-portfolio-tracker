@@ -17,7 +17,10 @@ const SYMBOL_TO_ID: Record<string, string> = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
-  if (!session?.user?.email) return res.status(401).json({ error: "Not authenticated" });
+  if (!session?.user?.email) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
 
   const email = session.user.email;
 
@@ -27,32 +30,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       orderBy: { createdAt: "desc" },
       take: 10,
     });
-    return res.status(200).json(trades);
+    res.status(200).json(trades);
+    return;
   }
 
   if (req.method === "POST") {
     const { coin, type, usd } = req.body as { coin: string; type: "buy" | "sell"; usd: number };
-    if (!coin || !type || typeof usd !== "number") return res.status(400).json({ error: "Missing fields" });
+    if (!coin || !type || typeof usd !== "number") {
+      res.status(400).json({ error: "Missing fields" });
+      return;
+    }
 
     const coinId = SYMBOL_TO_ID[coin];
-    if (!coinId) return res.status(400).json({ error: "Unsupported coin" });
+    if (!coinId) {
+      res.status(400).json({ error: "Unsupported coin" });
+      return;
+    }
 
     // fetch price
     const priceResp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
-    if (!priceResp.ok) return res.status(500).json({ error: "Price fetch failed" });
+    if (!priceResp.ok) {
+      res.status(500).json({ error: "Price fetch failed" });
+      return;
+    }
     const priceJson = await priceResp.json();
     const price = priceJson[coinId]?.usd;
-    if (!price) return res.status(500).json({ error: "Price unavailable" });
+    if (!price) {
+      res.status(500).json({ error: "Price unavailable" });
+      return;
+    }
 
     const coinAmount = usd / price;
     const user = await prisma.user.findUnique({ where: { email }, include: { holdings: true } });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
 
     if (type === "buy") {
-      if (user.balance < usd) return res.status(400).json({ error: "Insufficient balance" });
+      if (user.balance < usd) {
+        res.status(400).json({ error: "Insufficient balance" });
+        return;
+      }
 
       // find holding
       const existing = user.holdings.find((h) => h.coin === coin);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ops: any[] = [];
 
       if (existing) {
@@ -76,14 +99,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }));
 
       await prisma.$transaction(ops);
-      return res.status(201).json({ message: "Buy executed" });
+      res.status(201).json({ message: "Buy executed" });
+      return;
     } else {
       // sell
       const existing = user.holdings.find((h) => h.coin === coin);
       if (!existing || existing.amount < coinAmount) {
-        return res.status(400).json({ error: "Not enough holdings to sell" });
+        res.status(400).json({ error: "Not enough holdings to sell" });
+        return;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ops: any[] = [];
       if (existing.amount - coinAmount <= 0) {
         ops.push(prisma.holding.delete({ where: { id: existing.id } }));
@@ -104,9 +130,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }));
 
       await prisma.$transaction(ops);
-      return res.status(201).json({ message: "Sell executed" });
+      res.status(201).json({ message: "Sell executed" });
+      return;
     }
   }
 
-  return res.status(405).json({ error: "Method not allowed" });
+  res.status(405).json({ error: "Method not allowed" });
 }
