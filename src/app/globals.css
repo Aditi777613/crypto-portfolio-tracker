@@ -4,26 +4,46 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: #e2e8f0;
+  --text-muted: #64748b;
+  --text-green: #16a34a;
+  --text-red: #dc2626;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme="dark"] {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card-bg: rgba(30, 41, 59, 0.8);
+  --card-border: #334155;
+  --text-muted: #94a3b8;
+  --text-green: #22c55e;
+  --text-red: #ef4444;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-green {
+  color: var(--text-green);
+}
+
+.text-red {
+  color: var(--text-red);
 }

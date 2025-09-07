@@ -10,15 +10,38 @@ const COINS = [
   { id: "solana", symbol: "SOL" },
 ];
 
+// Simple in-memory cache to avoid hitting CoinGecko rate limits
+let cachedData: any = null;
+let lastFetch = 0;
+const CACHE_DURATION = 30000; // 30 seconds
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
+    const now = Date.now();
+    
+    // Return cached data if it's still fresh
+    if (cachedData && (now - lastFetch) < CACHE_DURATION) {
+      res.setHeader("Cache-Control", "no-cache");
+      res.status(200).json(cachedData);
+      return;
+    }
+
     const ids = COINS.map((c) => c.id).join(",");
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
+    
     const r = await fetch(url);
+    
     if (!r.ok) {
+      // If API fails, return cached data if available
+      if (cachedData) {
+        res.setHeader("Cache-Control", "no-cache");
+        res.status(200).json(cachedData);
+        return;
+      }
       res.status(r.status).json({ error: "CoinGecko error" });
       return;
     }
+    
     const data = await r.json();
 
     const mapped = COINS.map((c) => ({
@@ -28,11 +51,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       change_24h: data[c.id]?.usd_24h_change ?? null,
     }));
 
-    // cache on Vercel edge for 30s
-    res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
+    // Update cache
+    cachedData = mapped;
+    lastFetch = now;
+
+    res.setHeader("Cache-Control", "no-cache");
     res.status(200).json(mapped);
   } catch (err) {
     console.error(err);
+    // Return cached data if available on error
+    if (cachedData) {
+      res.setHeader("Cache-Control", "no-cache");
+      res.status(200).json(cachedData);
+      return;
+    }
     res.status(500).json({ error: "internal" });
   }
 }

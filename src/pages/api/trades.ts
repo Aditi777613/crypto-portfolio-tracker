@@ -18,7 +18,8 @@ const SYMBOL_TO_ID: Record<string, string> = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
   if (!session?.user?.email) {
-    res.status(401).json({ error: "Not authenticated" });
+    // Return empty array for unauthenticated users
+    res.status(200).json([]);
     return;
   }
 

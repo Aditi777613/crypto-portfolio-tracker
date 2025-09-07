@@ -2,11 +2,13 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession, signOut } from "next-auth/react";
 
 const COINS = ["BTC", "ETH", "USDT", "USDC", "XMR", "SOL"] as const;
 type Coin = typeof COINS[number];
 
 export default function TradePage() {
+  const { data: session } = useSession();
   const [prices, setPrices] = useState<Record<string, number>>({});
   const [coin, setCoin] = useState<Coin>("BTC");
   const [usd, setUsd] = useState<number>(100);
@@ -32,9 +34,19 @@ export default function TradePage() {
   }
 
   async function fetchTrades() {
-    const res = await fetch("/api/trades");
-    const data = await res.json();
-    setTrades(data || []);
+    try {
+      const res = await fetch("/api/trades");
+      const data = await res.json();
+      // Ensure data is an array before setting it
+      if (Array.isArray(data)) {
+        setTrades(data);
+      } else {
+        setTrades([]);
+      }
+    } catch (error) {
+      console.error("Error fetching trades:", error);
+      setTrades([]);
+    }
   }
 
   useEffect(() => {
@@ -78,10 +90,37 @@ export default function TradePage() {
         <div className="space-x-2">
           <Link href="/" className="px-3 py-1 border rounded">Home</Link>
           <Link href="/portfolio" className="px-3 py-1 border rounded">Portfolio</Link>
+          {session ? (
+            <button
+              onClick={() => signOut()}
+              className="px-3 py-1 border rounded hover:bg-gray-50"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link href="/login" className="px-3 py-1 border rounded">Login</Link>
+          )}
         </div>
       </header>
 
-      <section className="bg-white/80 dark:bg-slate-800/80 rounded-lg p-4 shadow mb-6">
+      {!session && (
+        <section className="rounded-lg p-4 shadow mb-6 card bg-yellow-50 border-yellow-200">
+          <div className="text-center">
+            <h3 className="text-lg font-medium text-yellow-800 mb-2">Authentication Required</h3>
+            <p className="text-yellow-700 mb-4">
+              You need to be logged in to make trades. Your portfolio data will be saved to your account.
+            </p>
+            <Link
+              href="/login"
+              className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Sign In
+            </Link>
+          </div>
+        </section>
+      )}
+
+      <section className="rounded-lg p-4 shadow mb-6 card">
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className="block text-sm">Coin</label>
@@ -101,22 +140,26 @@ export default function TradePage() {
           <div>
             <label className="block text-sm">Amount (USD)</label>
             <input type="number" value={usd} onChange={(e) => setUsd(Number(e.target.value))} className="mt-1 p-2 border rounded w-full" min="0" step="0.01"/>
-            <div className="text-xs text-slate-500 mt-1">≈ {coinAmount ? coinAmount.toFixed(6) : "0"} {coin} @ ${unitPrice?.toFixed(4) ?? "—"}</div>
+            <div className="text-xs text-muted mt-1">≈ {coinAmount ? coinAmount.toFixed(6) : "0"} {coin} @ ${unitPrice?.toFixed(4) ?? "—"}</div>
           </div>
 
           <div>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">
+            <button 
+              type="submit" 
+              disabled={loading || !session} 
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {loading ? "Processing..." : `${type === "buy" ? "Buy" : "Sell"} ${coin}`}
             </button>
           </div>
         </form>
       </section>
 
-      <section className="bg-white/80 dark:bg-slate-800/80 rounded-lg p-4 shadow">
+      <section className="rounded-lg p-4 shadow card">
         <h3 className="font-medium mb-2">Last 10 Trades</h3>
         {trades.length === 0 ? <div>No trades yet.</div> : (
           <table className="w-full text-sm">
-            <thead className="text-left text-slate-500">
+            <thead className="text-left text-muted">
               <tr><th>Time</th><th>Type</th><th>Coin</th><th>Amount</th><th>USD</th></tr>
             </thead>
             <tbody>
