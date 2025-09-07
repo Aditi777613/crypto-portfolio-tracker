@@ -1,0 +1,5 @@
+[33me627051[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfix-auto-refresh[m[33m)[m Add comprehensive README with setup instructions and architecture
+[33m9b897ed[m Add P/L tracking to trades table and exit functionality for holdings
+[33mc055c5d[m Implement complete authentication system and fix portfolio dashboard
+[33m2a1de27[m Fix auto-refresh feature and clean up authentication - removed NextAuth dependencies and simplified app
+[33mc81fbd0[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mstep5-deployment[m[33m, [m[1;32mmain[m[33m)[m Improve UI with Tailwind and add dark/light mode
