@@ -108,9 +108,41 @@ export default function PortfolioPage() {
                 const p = prices.find((x) => x.symbol === h.coin);
                 const value = p?.price ? p.price * h.amount : 0;
                 const change24h = p?.change_24h || 0;
+                
+                const handleSell = async () => {
+                  if (!p?.price) return;
+                  
+                  const confirmed = window.confirm(
+                    `Are you sure you want to exit your ${h.amount.toFixed(6)} ${h.coin} position for $${value.toFixed(2)}?`
+                  );
+                  
+                  if (!confirmed) return;
+                  
+                  try {
+                    const res = await fetch("/api/trades", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ 
+                        coin: h.coin, 
+                        type: "sell", 
+                        usd: value 
+                      }),
+                    });
+                    
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data?.error || "Sell failed");
+                    
+                    // Refresh portfolio data
+                    await fetchAll();
+                    alert("Successfully exited position!");
+                  } catch (err) {
+                    alert(err instanceof Error ? err.message : "Sell failed");
+                  }
+                };
+                
                 return (
-                  <div key={h.coin} className="p-3 border rounded flex justify-between card">
-                    <div>
+                  <div key={h.coin} className="p-3 border rounded flex justify-between items-center card">
+                    <div className="flex-1">
                       <div className="text-sm font-medium">{h.coin}</div>
                       <div className="text-sm text-muted">{h.amount.toFixed(6)} {h.coin}</div>
                       {p && (
@@ -119,10 +151,17 @@ export default function PortfolioPage() {
                         </div>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right mr-4">
                       <div className="font-medium">${value.toFixed(2)}</div>
                       <div className="text-xs text-muted">{p ? `$${p.price?.toFixed(4) ?? "—"}/unit` : "—"}</div>
                     </div>
+                    <button
+                      onClick={handleSell}
+                      className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                      disabled={!p?.price}
+                    >
+                      Exit
+                    </button>
                   </div>
                 );
               })}

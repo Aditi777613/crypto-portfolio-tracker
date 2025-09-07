@@ -160,18 +160,36 @@ export default function TradePage() {
         {trades.length === 0 ? <div>No trades yet.</div> : (
           <table className="w-full text-sm">
             <thead className="text-left text-muted">
-              <tr><th>Time</th><th>Type</th><th>Coin</th><th>Amount</th><th>USD</th></tr>
+              <tr><th>Time</th><th>Type</th><th>Coin</th><th>Amount</th><th>USD</th><th>P/L</th></tr>
             </thead>
             <tbody>
-              {trades.map((t) => (
-                <tr key={t.id} className="border-t">
-                  <td className="py-2">{new Date(t.createdAt).toLocaleString()}</td>
-                  <td className="py-2">{t.type}</td>
-                  <td className="py-2">{t.coin}</td>
-                  <td className="py-2">{Number(t.amount).toFixed(6)}</td>
-                  <td className="py-2">${Number(t.usdValue).toFixed(2)}</td>
-                </tr>
-              ))}
+              {trades.map((t) => {
+                // Calculate current value and P/L
+                const currentPrice = prices[t.coin] || 0;
+                const currentValue = currentPrice * Number(t.amount);
+                const profitLoss = currentValue - Number(t.usdValue);
+                const profitLossPercentage = Number(t.usdValue) > 0 ? (profitLoss / Number(t.usdValue)) * 100 : 0;
+                
+                return (
+                  <tr key={t.id} className="border-t">
+                    <td className="py-2">{new Date(t.createdAt).toLocaleString()}</td>
+                    <td className="py-2">{t.type}</td>
+                    <td className="py-2">{t.coin}</td>
+                    <td className="py-2">{Number(t.amount).toFixed(6)}</td>
+                    <td className="py-2">${Number(t.usdValue).toFixed(2)}</td>
+                    <td className="py-2">
+                      <div className={`${profitLoss >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        <div className="font-medium">
+                          {profitLoss >= 0 ? "+" : ""}${profitLoss.toFixed(2)}
+                        </div>
+                        <div className="text-xs">
+                          {profitLossPercentage >= 0 ? "+" : ""}{profitLossPercentage.toFixed(2)}%
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
