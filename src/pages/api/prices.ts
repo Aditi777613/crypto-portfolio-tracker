@@ -11,7 +11,14 @@ const COINS = [
 ];
 
 // Simple in-memory cache to avoid hitting CoinGecko rate limits
-let cachedData: any = null;
+type PriceItem = {
+  id: string;
+  symbol: string;
+  price: number | null;
+  change_24h: number | null;
+};
+
+let cachedData: PriceItem[] | null = null;
 let lastFetch = 0;
 const CACHE_DURATION = 30000; // 30 seconds
 
@@ -42,9 +49,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return;
     }
     
-    const data = await r.json();
+    const data = (await r.json()) as Record<string, { usd?: number; usd_24h_change?: number }>;
 
-    const mapped = COINS.map((c) => ({
+    const mapped: PriceItem[] = COINS.map((c) => ({
       id: c.id,
       symbol: c.symbol,
       price: data[c.id]?.usd ?? null,

@@ -3,8 +3,5 @@
     "src/pages/api/**/*.ts": {
       "maxDuration": 30
     }
-  },
-  "env": {
-    "NEXTAUTH_SECRET": "@nextauth_secret"
   }
 }
