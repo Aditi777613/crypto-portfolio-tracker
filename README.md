@@ -4,7 +4,7 @@ A modern, full-stack cryptocurrency portfolio tracking application with mock tra
 
 ## 🚀 Live Demo
 
-[Deploy on Vercel]([https://your-app.vercel.app](https://crypto-portfolio-tracker-tau.vercel.app/))
+[Deploy on Vercel]([(https://crypto-portfolio-tracker-tau.vercel.app/)])
 
 ## 📋 Features
 
