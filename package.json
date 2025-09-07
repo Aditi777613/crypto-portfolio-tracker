@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "vercel-build": "npm run prisma:generate && npm run prisma:migrate:deploy && next build"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0",
